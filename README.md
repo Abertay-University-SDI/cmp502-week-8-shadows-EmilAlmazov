@@ -1,8 +1,8 @@
 # CMP301_Shadows
 Starter project for CMP301. Shadow mapping.
 
-Name:
+Name: Emil Almazov
 
-Number:
+Number: 2405975
 
 Outline of project:
