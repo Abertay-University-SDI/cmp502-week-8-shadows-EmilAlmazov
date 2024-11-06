@@ -25,15 +25,28 @@ protected:
 	void gui();
 
 private:
+	void renderShadowMapToScreen();
+
+private:
 	TextureShader* textureShader;
 	PlaneMesh* mesh;
+	BaseMesh* mesh2;
+	BaseMesh* mesh3;
 
 	Light* light;
+	XMFLOAT3 lightPosition;
+	XMFLOAT3 lightDirection;
+	BaseMesh* lightMesh;
+
 	AModel* model;
 	ShadowShader* shadowShader;
 	DepthShader* depthShader;
 
 	ShadowMap* shadowMap;
+
+	XMFLOAT3 modelRotation;
+	XMFLOAT3 cubePosition;
+	XMFLOAT3 spherePosition;
 };
 
 #endif
