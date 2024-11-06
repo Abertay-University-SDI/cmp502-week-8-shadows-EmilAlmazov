@@ -32,17 +32,18 @@ private:
 	PlaneMesh* mesh;
 	BaseMesh* mesh2;
 	BaseMesh* mesh3;
+	OrthoMesh* orthoMesh;
 
-	Light* light;
+	std::vector<Light*> lights;
+	
 	XMFLOAT3 lightPosition;
 	XMFLOAT3 lightDirection;
-	BaseMesh* lightMesh;
 
 	AModel* model;
 	ShadowShader* shadowShader;
 	DepthShader* depthShader;
 
-	ShadowMap* shadowMap;
+	ShadowMap* shadowMaps[2];
 
 	XMFLOAT3 modelRotation;
 	XMFLOAT3 cubePosition;
