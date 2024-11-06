@@ -25,19 +25,17 @@ protected:
 	void gui();
 
 private:
-	void renderShadowMapToScreen();
+	void renderShadowMapToScreen(ShadowMap* shadowMap, OrthoMesh* orthoMesh);
 
 private:
 	TextureShader* textureShader;
 	PlaneMesh* mesh;
 	BaseMesh* mesh2;
 	BaseMesh* mesh3;
-	OrthoMesh* orthoMesh;
+	std::vector<OrthoMesh*> orthoMeshes;
 
 	std::vector<Light*> lights;
-	
-	XMFLOAT3 lightPosition;
-	XMFLOAT3 lightDirection;
+	std::vector<XMFLOAT3> lightDirections;
 
 	AModel* model;
 	ShadowShader* shadowShader;

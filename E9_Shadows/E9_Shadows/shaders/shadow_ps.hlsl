@@ -77,7 +77,7 @@ float4 main(InputType input) : SV_TARGET
         // Shadow test. Is or isn't in shadow
         if (hasDepthData(pTexCoord))
         {
-        // Has depth map data
+            // Has depth map data
             if (!isInShadow(depthMapTexture[i], pTexCoord, input.lightViewPos[i], shadowMapBias, i))
             {
                 // is NOT in shadow, therefore light

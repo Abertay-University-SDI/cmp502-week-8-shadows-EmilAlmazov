@@ -22,7 +22,10 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	mesh3 = new SphereMesh(renderer->getDevice(), renderer->getDeviceContext());
 	float orthoWidth = screenWidth / 4;
 	float orthoHeight = screenHeight / 4;
-	orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), orthoWidth, orthoHeight, -(screenWidth / 2 - orthoWidth / 2), screenHeight / 2 - orthoHeight / 2);
+	OrthoMesh* orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), orthoWidth, orthoHeight, -(screenWidth / 2 - orthoWidth / 2), screenHeight / 2 - orthoHeight / 2);
+	orthoMeshes.push_back(orthoMesh);
+	orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), orthoWidth, orthoHeight, +(screenWidth / 2 - orthoWidth / 2), screenHeight / 2 - orthoHeight / 2);
+	orthoMeshes.push_back(orthoMesh);
 	model = new AModel(renderer->getDevice(), "res/teapot.obj");
 	textureMgr->loadTexture(L"brick", L"res/brick1.dds");
 	textureMgr->loadTexture(L"wood", L"res/wood.png");
@@ -50,22 +53,22 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	Light* light = new Light();
 	light->setAmbientColour(0.3f, 0.3f, 0.3f, 1.0f); // Dark light
 	light->setDiffuseColour(1.0f, 0.0f, 0.0f, 1.0f); // Red light
-	light->setDirection(0.7f, -0.7f, 0.f); // Pointing down and to the right
-	light->setPosition(-10.f, 0.f, 0.f);
+	light->setDirection(0.f, -1.f, 0.f); // Pointing down and to the right
+	light->setPosition(0.f, 10.f, 0.f);
 	light->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
 	lights.push_back(light);
-
-	lightPosition = light->getPosition();
-	lightDirection = light->getDirection();
+	lightDirections.push_back(light->getDirection());
 
 	// Configure 2nd directional light
 	Light* light2 = new Light();
 	light2->setAmbientColour(0.3f, 0.3f, 0.3f, 1.0f);
-	light2->setDiffuseColour(0.0f, 0.0f, 1.0f, 1.0f); // Blue light
-	light2->setDirection(-0.7f, -0.7f, 0.f); // Pointing down and to the left
-	light2->setPosition(10.f, 0.f, 0.f);
+	light2->setDiffuseColour(0.0f, 1.0f, 0.0f, 1.0f); // Green light
+	light2->setDirection(0.f, -1.f, 0.f); // Pointing down and to the left
+	light2->setPosition(0.f, 10.f, 0.f);
 	light2->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
 	lights.push_back(light2);
+	lightDirections.push_back(light2->getDirection());
+
 
 	modelRotation = XMFLOAT3(0.f, 0.f, 0.f);
 	cubePosition = XMFLOAT3(-5.5f, 1.f, 1.2f);
@@ -132,7 +135,6 @@ void App1::depthPass()
 		lights[i]->generateViewMatrix();
 		XMMATRIX lightViewMatrix = lights[i]->getViewMatrix();
 		XMMATRIX lightProjectionMatrix = lights[i]->getOrthoMatrix();
-		//XMMATRIX lightProjectionMatrix = light->getProjectionMatrix();
 		XMMATRIX worldMatrix = renderer->getWorldMatrix();
 
 		// Render floor
@@ -226,7 +228,10 @@ void App1::finalPass()
 #pragma endregion
 
 	// DEBUGGING - Render the shadow map to the screen
-	renderShadowMapToScreen();
+	for (size_t i = 0; i < orthoMeshes.size(); ++i)
+	{
+		renderShadowMapToScreen(shadowMaps[i], orthoMeshes[i]);
+	}
 
 	gui();
 	renderer->endScene();
@@ -246,32 +251,29 @@ void App1::gui()
 	ImGui::Checkbox("Wireframe mode", &wireframeToggle);
 
 	// MODEL controls
-	ImGui::Text("Model Controls");
 	ImGui::DragFloat3("Model Rotation", reinterpret_cast<float*>(&modelRotation), 0.01f, -XM_2PI, XM_2PI);
 
-	// CUBE controls
-	ImGui::Text("Cube Controls");
-	ImGui::DragFloat3("Cube Position", reinterpret_cast<float*>(&cubePosition), 0.1f, -50.f, 50.f);
-
-	// SPHERE controls
-	ImGui::Text("Sphere Controls");
-	ImGui::DragFloat3("Sphere Position", reinterpret_cast<float*>(&spherePosition), 0.1f, -50.f, 50.f);
-
-	// Light controls
-	ImGui::Text("Light Controls");
-	ImGui::DragFloat3("Light Position", reinterpret_cast<float*>(&lightPosition), 0.1f, -50.f, 50.f);
-	lights[0]->setPosition(lightPosition.x, lightPosition.y, lightPosition.z);
-	ImGui::DragFloat3("Light Direction", reinterpret_cast<float*>(&lightDirection), 0.01f, -1.f, 1.f);
+	//  === Light controls ===
+	
+	// 1st light
+	XMFLOAT3& lightDirection = lightDirections[0];
+	ImGui::DragFloat3("Light 1 Direction", reinterpret_cast<float*>(&lightDirection), 0.01f, -1.f, 1.f);
 	lights[0]->setDirection(lightDirection.x, lightDirection.y, lightDirection.z);
+	
+	// 2nd light
+	XMFLOAT3& lightDirection2 = lightDirections[1];
+	ImGui::DragFloat3("Light 2 Direction", reinterpret_cast<float*>(&lightDirection2), 0.01f, -1.f, 1.f);
+	lights[1]->setDirection(lightDirection2.x, lightDirection2.y, lightDirection2.z);
 
-	// Render UI
+
+	// === Render UI
 	ImGui::Render();
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 }
 
 
 
-void App1::renderShadowMapToScreen()
+void App1::renderShadowMapToScreen(ShadowMap* shadowMap, OrthoMesh* orthoMesh)
 {
 	// RENDER THE RENDER TEXTURE SCENE
 // Requires 2D rendering and an ortho mesh.
@@ -282,7 +284,7 @@ void App1::renderShadowMapToScreen()
 
 	// Render ortho mesh with texture shader set.
 	orthoMesh->sendData(renderer->getDeviceContext());
-	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, orthoViewMatrix, orthoMatrix, shadowMaps[0]->getDepthMapSRV());
+	textureShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, orthoViewMatrix, orthoMatrix, shadowMap->getDepthMapSRV());
 	textureShader->render(renderer->getDeviceContext(), orthoMesh->getIndexCount());
 	renderer->setZBuffer(true);
 }
